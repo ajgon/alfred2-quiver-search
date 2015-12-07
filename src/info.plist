@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>13ff59fc-8322-4fdf-8ea6-8b5748ed1f12</string>
+	<key>connections</key>
+	<dict>
+		<key>636F6168-2925-4370-A687-FAB8FADB6D14</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>536D424D-1889-4394-B9F5-076FC0DD5953</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
+		<key>A1A3E6C6-EEF0-4519-BB2E-3667C7658290</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>45DEE111-FBAF-4FCB-BA87-0B19C656EA46</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>Igor Rzegocki</string>
+	<key>description</key>
+	<string></string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>Quiver Search</string>
+	<key>objects</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>open "{query}"</string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.script</string>
+			<key>uid</key>
+			<string>45DEE111-FBAF-4FCB-BA87-0B19C656EA46</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>argumenttype</key>
+				<integer>0</integer>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>keyword</key>
+				<string>qs</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<true/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string>Looking for notes...</string>
+				<key>script</key>
+				<string>require 'json'
+
+result = '&lt;?xml version="1.0"?&gt;'
+
+unless File.exist?('.quiver-library')
+  puts result + '&lt;items&gt;&lt;item valid="no"&gt;&lt;title&gt;Library is missing&lt;/title&gt;&lt;subtitle&gt;Navigate to your Quiver library in Alfred File Browser, and choose action "Set Quiver Library".&lt;/subtitle&gt;&lt;/item&gt;&lt;/items&gt;'
+  exit 1
+end
+
+LIBRARY_PATH = '/Users/ajgon/ownCloud/ajgon/sync/quiver'
+QUERY = "{query}"
+
+if QUERY.length &lt; 3
+  puts result + '&lt;items&gt;&lt;item valid="no"&gt;&lt;title&gt;Query too short&lt;/title&gt;&lt;subtitle&gt;The query needs to be at least 3 characters long&lt;/subtitle&gt;&lt;/item&gt;&lt;/items&gt;'
+  exit 0
+end
+
+query = QUERY.gsub(/[^[:alpha:]]+/i, ' ').split(' ').select { |q| q.size &gt;= 3 }.uniq
+
+files = Dir.glob(File.join(LIBRARY_PATH, '**', 'content.json')).select do |file|
+  words = File.open(file, 'r:UTF-8', &amp;:read).gsub(/&lt;[^&gt;]+/, '').gsub(/[[:punct:]&lt;&gt;+=]+/, '').gsub(/[[:blank:]\n]+/mx, ' ').strip.downcase.split(' ').uniq
+  query.all? { |q| words.detect { |word| word.include?(q) } }
+end
+
+if files.size == 0
+  puts result + '&lt;items&gt;&lt;item valid="no"&gt;&lt;title&gt;No notes found&lt;/title&gt;&lt;/item&gt;&lt;/items&gt;'
+  exit 0
+end
+
+files = files.map do |file|
+  path = file.sub(/\.qvnote\/.*$/, '.qvnote/')
+  {
+    id: file.match(/([^\/]+)\.qvnote\//)[1],
+    path: path,
+    title: JSON.parse(File.read(File.join(path, 'meta.json')))['title'],
+    notebook: JSON.parse(File.read(File.join(path.sub(/\.qvnotebook\/.*$/, '.qvnotebook/'), 'meta.json')))['name']
+  }
+end
+
+result += '&lt;items&gt;'
+
+files.each do |file|
+  result += "&lt;item uid=\"#{file[:id]}\" arg=\"quiver:///notes/#{file[:id]}\"&gt;&lt;title&gt;#{file[:title]}&lt;/title&gt;&lt;subtitle&gt;#{file[:notebook]}&lt;/subtitle&gt;&lt;icon type=\"fileicon\"&gt;&lt;/icon&gt;&lt;/item&gt;";
+end
+
+result += '&lt;/items&gt;'
+
+puts result</string>
+				<key>title</key>
+				<string>Quiver Search</string>
+				<key>type</key>
+				<integer>2</integer>
+				<key>withspace</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>A1A3E6C6-EEF0-4519-BB2E-3667C7658290</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>acceptsmulti</key>
+				<false/>
+				<key>filetypes</key>
+				<array>
+					<string>com.happenapps.qvlibrary</string>
+				</array>
+				<key>name</key>
+				<string>Set Quiver Library</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.trigger.action</string>
+			<key>uid</key>
+			<string>636F6168-2925-4370-A687-FAB8FADB6D14</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>echo "{query}" &gt; .quiver-library</string>
+				<key>type</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.script</string>
+			<key>uid</key>
+			<string>536D424D-1889-4394-B9F5-076FC0DD5953</string>
+			<key>version</key>
+			<integer>0</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string></string>
+	<key>uidata</key>
+	<dict>
+		<key>45DEE111-FBAF-4FCB-BA87-0B19C656EA46</key>
+		<dict>
+			<key>ypos</key>
+			<real>10</real>
+		</dict>
+		<key>536D424D-1889-4394-B9F5-076FC0DD5953</key>
+		<dict>
+			<key>ypos</key>
+			<real>140</real>
+		</dict>
+		<key>636F6168-2925-4370-A687-FAB8FADB6D14</key>
+		<dict>
+			<key>ypos</key>
+			<real>140</real>
+		</dict>
+		<key>A1A3E6C6-EEF0-4519-BB2E-3667C7658290</key>
+		<dict>
+			<key>ypos</key>
+			<real>10</real>
+		</dict>
+	</dict>
+	<key>webaddress</key>
+	<string>https://github.com/ajgon/alfred2-quiver-search</string>
+</dict>
+</plist>
