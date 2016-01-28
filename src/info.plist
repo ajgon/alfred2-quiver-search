@@ -87,7 +87,12 @@ unless File.exist?('.quiver-library')
   exit 1
 end
 
-LIBRARY_PATH = '/Users/ajgon/ownCloud/ajgon/sync/quiver'
+File.open('.quiver-library') do |file|
+  file.each_line do |line|
+    LIBRARY_PATH = line.chomp
+  end
+end
+
 QUERY = "{query}"
 
 if QUERY.length &lt; 3
