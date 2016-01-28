@@ -78,9 +78,16 @@
 				<key>runningsubtext</key>
 				<string>Looking for notes...</string>
 				<key>script</key>
-				<string>require 'json'
+				<string># coding: utf-8
+require 'json'
+require 'cgi'
+ENV['GEM_HOME'] = 'gems'
+ENV['GEM_PATH'] = 'gems'
+require 'rubygems'
+Gem.clear_paths
+require 'unicode_utils/nfc'
 
-result = '&lt;?xml version="1.0"?&gt;'
+result = '&lt;?xml version="1.0" encoding="utf-8"?&gt;'
 
 unless File.exist?('.quiver-library')
   puts result + '&lt;items&gt;&lt;item valid="no"&gt;&lt;title&gt;Library is missing&lt;/title&gt;&lt;subtitle&gt;Navigate to your Quiver library in Alfred File Browser, and choose action "Set Quiver Library".&lt;/subtitle&gt;&lt;/item&gt;&lt;/items&gt;'
@@ -93,18 +100,18 @@ File.open('.quiver-library') do |file|
   end
 end
 
-QUERY = "{query}"
+QUERY = UnicodeUtils.nfc("{query}")
 
 if QUERY.length &lt; 3
   puts result + '&lt;items&gt;&lt;item valid="no"&gt;&lt;title&gt;Query too short&lt;/title&gt;&lt;subtitle&gt;The query needs to be at least 3 characters long&lt;/subtitle&gt;&lt;/item&gt;&lt;/items&gt;'
   exit 0
 end
 
-query = QUERY.gsub(/[^[:alpha:]]+/i, ' ').split(' ').select { |q| q.size &gt;= 3 }.uniq
+query = QUERY.gsub(/[^\p{L}\p{M}]+/i, ' ').split(' ').select { |q| q.size &gt;= 3 }.uniq
 
 files = Dir.glob(File.join(LIBRARY_PATH, '**', 'content.json')).select do |file|
   words = File.open(file, 'r:UTF-8', &amp;:read).gsub(/&lt;[^&gt;]+/, '').gsub(/[[:punct:]&lt;&gt;+=]+/, '').gsub(/[[:blank:]\n]+/mx, ' ').strip.downcase.split(' ').uniq
-  query.all? { |q| words.detect { |word| word.include?(q) } }
+  query.all? { |q| words.detect { |word| UnicodeUtils.nfc(word).include?(q) } }
 end
 
 if files.size == 0
@@ -117,8 +124,8 @@ files = files.map do |file|
   {
     id: file.match(/([^\/]+)\.qvnote\//)[1],
     path: path,
-    title: JSON.parse(File.read(File.join(path, 'meta.json')))['title'],
-    notebook: JSON.parse(File.read(File.join(path.sub(/\.qvnotebook\/.*$/, '.qvnotebook/'), 'meta.json')))['name']
+    title: CGI.escapeHTML(JSON.parse(File.read(File.join(path, 'meta.json')))['title']),
+    notebook: CGI.escapeHTML(JSON.parse(File.read(File.join(path.sub(/\.qvnotebook\/.*$/, '.qvnotebook/'), 'meta.json')))['name'])
   }
 end
 
