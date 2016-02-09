@@ -78,7 +78,9 @@
 				<key>runningsubtext</key>
 				<string>Looking for notes...</string>
 				<key>script</key>
-				<string># coding: utf-8
+        <string># coding: utf-8
+Encoding.default_external = "utf-8"
+
 require 'json'
 require 'cgi'
 ENV['GEM_HOME'] = 'gems'
